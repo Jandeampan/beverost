@@ -1,0 +1,48 @@
+{
+  "name": "extra-errors",
+  "version": "1.0.0",
+  "description": "Extra error classes for applications",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "errors",
+    "extra-errors",
+    "exception-handling",
+    "typescript",
+    "custom-errors"
+  ],
+  "author": "Jandeampan",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/parser": "^8.2.0",
+    "eslint": "^9.9.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.4",
+    "typescript": "^5.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jandeampan/extra-errors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Jandeampan/extra-errors/issues"
+  },
+  "homepage": "https://github.com/Jandeampan/extra-errors#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
