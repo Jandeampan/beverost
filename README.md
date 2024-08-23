@@ -21,7 +21,14 @@ yarn add extra-errors
 Import the error classes you need and use them in your application:
 
 ```typescript
-import { ApiError, NetworkError, ParseError, ValidationError, AuthenticationError, AuthorizationError } from 'extra-errors';
+import {
+    ApiError,
+    NetworkError,
+    ParseError,
+    ValidationError,
+    AuthenticationError,
+    AuthorizationError
+} from 'extra-errors';
 
 // Example usage of ApiError
 function fetchData() {
