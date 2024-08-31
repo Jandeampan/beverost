@@ -1,12 +1,30 @@
 {
-    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 2020,
-      "sourceType": "module"
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "overrides": [
+    {
+      "files": ["dist/cjs/**/*.js"],
+      "env": {
+        "node": true,
+        "commonjs": true
+      }
     },
-    "rules": {
-      "@typescript-eslint/explicit-module-boundary-types": "off"
+    {
+      "files": ["dist/mjs/**/*.js"],
+      "env": {
+        "node": true,
+        "es2020": true
+      },
+      "parserOptions": {
+        "sourceType": "module"
+      }
     }
+  ],
+  "rules": {
+    "@typescript-eslint/explicit-module-boundary-types": "off"
   }
-  
+}

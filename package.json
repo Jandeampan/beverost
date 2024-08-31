@@ -2,18 +2,29 @@
   "name": "beverost",
   "version": "1.0.0",
   "description": "Better server boost for server development in Node.js",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/mjs/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "test": "jest",
-    "build": "tsc",
+    "build": "npm run build:cjs && npm run build:mjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:mjs": "tsc -p tsconfig.mjs.json",
     "lint": "eslint . --ext .ts",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "prepare": "npm run build",
-    "start": "node dist/src/index.js",
+    "start": "node dist/cjs/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "keywords": [
+    "better",
     "server",
     "boost",
     "nodejs",
@@ -53,5 +64,6 @@
   ],
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "tsconfig": "./tsconfig.json"
 }

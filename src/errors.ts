@@ -1,55 +1,69 @@
 /**
-  * @module errors
-  * @description This module contains custom error classes for handling various types of errors in the application.
-  */
+ * @module errors
+ * @description This module contains custom error classes for handling various types of errors in the application.
+ */
 
 import { Logger } from './logger';
 
 /**
-  * Base class for custom errors in the application.
-  * Provides common functionality for logging and error details.
-  * 
-  * @abstract
-  * @extends Error
-  */
+ * Base class for custom errors in the application.
+ * Provides common functionality for logging and error details.
+ * 
+ * @abstract
+ * @extends Error
+ */
 abstract class BaseError extends Error {
+    protected readonly logger: Logger;
 
     /**
-      * Creates a new instance of BaseError.
-      * 
-      * @param {string} name - The name of the error.
-      * @param {string} message - A descriptive error message.
-      */
-    constructor(name: string, message: string, protected logger: Logger = new Logger(name)) {
+     * Creates a new instance of BaseError.
+     * 
+     * @param {string} name - The name of the error.
+     * @param {string} message - A descriptive error message.
+     * @param {Logger} [logger] - Optional logger instance for logging error details.
+     */
+
+    constructor(name: string, message: string, logger?: Logger) {
         super(message);
         this.name = name;
+        this.logger = logger || new Logger(name);
+        Object.setPrototypeOf(this, new.target.prototype);
         this.log();
     }
 
     /**
-      * Logs the error details.
-      * 
-      * @protected
-      * @abstract
-      */
+     * Logs the error details.
+     * 
+     * @protected
+     * @abstract
+     */
     protected abstract log(): void;
+
+    /**
+     * Returns a string representation of the error.
+     * 
+     * @returns {string} A string representation of the error.
+     */
+    public toString(): string {
+        return `${this.name}: ${this.message}`;
+    }
 }
 
 /**
-  * Represents an error that occurs during API communication.
-  * This class is particularly useful when dealing with HTTP requests and responses.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs during API communication.
+ * Useful for handling HTTP request and response errors.
+ * 
+ * @extends BaseError
+ */
 export class ApiError extends BaseError {
     /**
-      * Creates a new instance of ApiError.
-      * 
-      * @param {number} status - The HTTP status code associated with the error.
-      * @param {string} message - A descriptive error message providing more details about the API error.
-      * @param {string} [requestId] - Optional request ID for tracking purposes.
-      */
-    constructor(public status: number, message: string, public requestId?: string) {
+     * Creates a new instance of ApiError.
+     * 
+     * @param {number} status - The HTTP status code associated with the error.
+     * @param {string} message - A descriptive error message.
+     * @param {string} [requestId] - Optional request ID for tracking purposes.
+     */
+    constructor(public readonly status: number, message: string, public readonly requestId?: string) {
         super('ApiError', message);
     }
 
@@ -59,19 +73,18 @@ export class ApiError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to network-related issues.
-  * Useful for handling errors such as connection timeouts, DNS failures, offline status, etc.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to network-related issues.
+ * 
+ * @extends BaseError
+ */
 export class NetworkError extends BaseError {
     /**
-      * Creates a new instance of NetworkError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the network issue.
-      * @param {string} [code] - Optional error code for more specific categorization.
-      */
-    constructor(message: string, public code?: string) {
+     * Creates a new instance of NetworkError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [code] - Optional error code.
+     */
+    constructor(message: string, public readonly code?: string) {
         super('NetworkError', message);
     }
 
@@ -81,18 +94,18 @@ export class NetworkError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs during parsing operations.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs during parsing operations.
+ * 
+ * @extends BaseError
+ */
 export class ParseError extends BaseError {
     /**
-      * Creates a new instance of ParseError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the parsing issue.
-      * @param {string} [source] - Optional source of the parsing error (e.g., 'JSON', 'XML').
-      */
-    constructor(message: string, public source?: string) {
+     * Creates a new instance of ParseError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [source] - Optional source of the parsing error (e.g., 'JSON', 'XML').
+     */
+    constructor(message: string, public readonly source?: string) {
         super('ParseError', message);
     }
 
@@ -102,18 +115,18 @@ export class ParseError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to validation failures.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to validation failures.
+ * 
+ * @extends BaseError
+ */
 export class ValidationError extends BaseError {
     /**
-      * Creates a new instance of ValidationError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the validation issue.
-      * @param {string[]} [fields] - Optional array of field names that failed validation.
-      */
-    constructor(message: string, public fields?: string[]) {
+     * Creates a new instance of ValidationError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string[]} [fields] - Optional array of field names that failed validation.
+     */
+    constructor(message: string, public readonly fields?: string[]) {
         super('ValidationError', message);
     }
 
@@ -123,18 +136,18 @@ export class ValidationError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to authentication failures.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to authentication failures.
+ * 
+ * @extends BaseError
+ */
 export class AuthenticationError extends BaseError {
     /**
-      * Creates a new instance of AuthenticationError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the authentication issue.
-      * @param {string} [userId] - Optional user ID associated with the authentication attempt.
-      */
-    constructor(message: string, public userId?: string) {
+     * Creates a new instance of AuthenticationError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [userId] - Optional user ID associated with the authentication attempt.
+     */
+    constructor(message: string, public readonly userId?: string) {
         super('AuthenticationError', message);
     }
 
@@ -144,19 +157,19 @@ export class AuthenticationError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to authorization failures.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to authorization failures.
+ * 
+ * @extends BaseError
+ */
 export class AuthorizationError extends BaseError {
     /**
-      * Creates a new instance of AuthorizationError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the authorization issue.
-      * @param {string} [resource] - Optional resource that the user attempted to access.
-      * @param {string} [action] - Optional action that the user attempted to perform.
-      */
-    constructor(message: string, public resource?: string, public action?: string) {
+     * Creates a new instance of AuthorizationError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [resource] - Optional resource that the user attempted to access.
+     * @param {string} [action] - Optional action that the user attempted to perform.
+     */
+    constructor(message: string, public readonly resource?: string, public readonly action?: string) {
         super('AuthorizationError', message);
     }
 
@@ -166,18 +179,18 @@ export class AuthorizationError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to rate limiting.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to rate limiting.
+ * 
+ * @extends BaseError
+ */
 export class RateLimitError extends BaseError {
     /**
-      * Creates a new instance of RateLimitError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the rate limiting issue.
-      * @param {number} [retryAfter] - Optional number of seconds after which the client can retry.
-      */
-    constructor(message: string, public retryAfter?: number) {
+     * Creates a new instance of RateLimitError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {number} [retryAfter] - Optional number of seconds after which the client can retry.
+     */
+    constructor(message: string, public readonly retryAfter?: number) {
         super('RateLimitError', message);
     }
 
@@ -187,18 +200,18 @@ export class RateLimitError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to database operations.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to database operations.
+ * 
+ * @extends BaseError
+ */
 export class DatabaseError extends BaseError {
     /**
-      * Creates a new instance of DatabaseError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the database issue.
-      * @param {string} [operation] - Optional database operation that caused the error.
-      */
-    constructor(message: string, public operation?: string) {
+     * Creates a new instance of DatabaseError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [operation] - Optional database operation that caused the error.
+     */
+    constructor(message: string, public readonly operation?: string) {
         super('DatabaseError', message);
     }
 
@@ -208,18 +221,18 @@ export class DatabaseError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to configuration issues.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to configuration issues.
+ * 
+ * @extends BaseError
+ */
 export class ConfigurationError extends BaseError {
     /**
-      * Creates a new instance of ConfigurationError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the configuration issue.
-      * @param {string} [configKey] - Optional configuration key that caused the error.
-      */
-    constructor(message: string, public configKey?: string) {
+     * Creates a new instance of ConfigurationError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [configKey] - Optional configuration key that caused the error.
+     */
+    constructor(message: string, public readonly configKey?: string) {
         super('ConfigurationError', message);
     }
 
@@ -229,22 +242,107 @@ export class ConfigurationError extends BaseError {
 }
 
 /**
-  * Represents an error that occurs due to external service failures.
-  * 
-  * @extends BaseError
-  */
+ * Represents an error that occurs due to external service failures.
+ * 
+ * @extends BaseError
+ */
 export class ExternalServiceError extends BaseError {
     /**
-      * Creates a new instance of ExternalServiceError.
-      * 
-      * @param {string} message - A descriptive error message providing details about the external service issue.
-      * @param {string} serviceName - The name of the external service that failed.
-      */
-    constructor(message: string, public serviceName: string) {
+     * Creates a new instance of ExternalServiceError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} serviceName - The name of the external service that failed.
+     */
+    constructor(message: string, public readonly serviceName: string) {
         super('ExternalServiceError', message);
     }
 
     protected log(): void {
         this.logger.error(`External Service Error (${this.serviceName}): ${this.message}`);
+    }
+}
+
+/**
+ * Represents an error that occurs when a file or directory is not found.
+ * 
+ * @extends BaseError
+ */
+export class FileNotFoundError extends BaseError {
+    /**
+     * Creates a new instance of FileNotFoundError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [path] - Optional path of the file or directory that was not found.
+     */
+    constructor(message: string, public readonly path?: string) {
+        super('FileNotFoundError', message);
+    }
+
+    protected log(): void {
+        this.logger.error(`File Not Found Error: ${this.message}${this.path ? ` (Path: ${this.path})` : ''}`);
+    }
+}
+
+/**
+ * Represents an error that occurs when a log directory does not exist.
+ * 
+ * @extends BaseError
+ */
+export class LogDirectoryNotFoundError extends BaseError {
+    /**
+     * Creates a new instance of LogDirectoryNotFoundError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} directoryPath - The path of the log directory that was not found.
+     */
+    constructor(message: string, public readonly directoryPath: string) {
+        super('LogDirectoryNotFoundError', message);
+    }
+
+    protected log(): void {
+        this.logger.error(`Log Directory Not Found Error: ${this.message} (Directory: ${this.directoryPath})`);
+    }
+}
+
+/**
+ * Represents an error that occurs when there's an issue with log file operations.
+ * 
+ * @extends BaseError
+ */
+export class LogFileOperationError extends BaseError {
+    /**
+     * Creates a new instance of LogFileOperationError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} filePath - The path of the log file that caused the error.
+     * @param {string} [operation] - Optional description of the operation that failed.
+     */
+    constructor(message: string, public readonly filePath: string, public readonly operation?: string) {
+        super('LogFileOperationError', message);
+    }
+
+    protected log(): void {
+        this.logger.error(`Log File Operation Error: ${this.message} (File: ${this.filePath}${this.operation ? `, Operation: ${this.operation}` : ''})`);
+    }
+}
+
+/**
+ * Represents an error that occurs when there's an issue with logger initialization.
+ * 
+ * @extends BaseError
+ */
+export class LoggerInitializationError extends BaseError {
+    /**
+     * Creates a new instance of LoggerInitializationError.
+     * 
+     * @param {string} message - A descriptive error message.
+     * @param {string} [component] - Optional description of the component that failed to initialize.
+     */
+    constructor(message: string, public readonly component?: string) {
+        super('LoggerInitializationError', message);
+    }
+
+    protected log(): void {
+        this.logger.error(`Logger Initialization Error: ${this.message}${this.component ? ` (Component: ${this.component})` : ''}`);
     }
 }
