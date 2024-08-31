@@ -34,6 +34,7 @@
   "author": "Jandeampan",
   "license": "MIT",
   "devDependencies": {
+    "@types/chai": "^4.3.19",
     "@types/jest": "^29.5.12",
     "@typescript-eslint/eslint-plugin": "^8.2.0",
     "@typescript-eslint/parser": "^8.2.0",
