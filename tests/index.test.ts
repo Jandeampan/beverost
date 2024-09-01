@@ -17,6 +17,7 @@ import {
   FileNotFoundError
 } from '../src/index';
 import { transports } from 'winston';
+import { ApiService } from '../src/api';
 
 describe('Logger', () => {
   let logger: Logger;
@@ -30,7 +31,7 @@ describe('Logger', () => {
 
   afterEach(async () => {
     if (fs.existsSync(testLogFile)) {
-      fs.unlinkSync(testLogFile);
+      await fs.promises.unlink(testLogFile);
     }
     if (fs.existsSync(testLogDir)) {
       await fs.promises.rm(testLogDir, { recursive: true, force: true });
@@ -58,7 +59,7 @@ describe('Logger', () => {
     await logger.verbose('Verbose message');
     await new Promise(resolve => setTimeout(resolve, 100)); // Wait for file write
 
-    const logContent = fs.readFileSync(testLogFile, 'utf8');
+    const logContent = await fs.promises.readFile(testLogFile, 'utf8');
     expect(logContent).toContain('INFO');
     expect(logContent).toContain('WARN');
     expect(logContent).toContain('ERROR');
@@ -69,14 +70,14 @@ describe('Logger', () => {
   it('should include context in log messages', async () => {
     await logger.info('Context test');
     await new Promise(resolve => setTimeout(resolve, 100)); // Wait for file write
-    const logContent = fs.readFileSync(testLogFile, 'utf8');
+    const logContent = await fs.promises.readFile(testLogFile, 'utf8');
     expect(logContent).toContain('[TestContext]');
   });
 
   it('should handle log without details', async () => {
     await logger.logWithoutDetails('No details log');
     await new Promise(resolve => setTimeout(resolve, 100)); // Wait for file write
-    const logContent = fs.readFileSync(testLogFile, 'utf8');
+    const logContent = await fs.promises.readFile(testLogFile, 'utf8');
     expect(logContent).toContain('No details log');
     expect(logContent).not.toContain('timestamp');
   });
@@ -86,7 +87,7 @@ describe('Logger', () => {
     await logger.info('This should not be logged');
     await logger.error('This should be logged');
     await new Promise(resolve => setTimeout(resolve, 100)); // Wait for file write
-    const logContent = fs.readFileSync(testLogFile, 'utf8');
+    const logContent = await fs.promises.readFile(testLogFile, 'utf8');
     expect(logContent).not.toContain('This should not be logged');
     expect(logContent).toContain('This should be logged');
   });
@@ -217,5 +218,85 @@ describe('CustomError', () => {
         expect(mockLogger.error).toHaveBeenCalledWith('Database Error: Query failed (Operation: INSERT)');
       }
     }
+  });
+});
+
+describe('ApiService', () => {
+  let apiService: ApiService;
+  let mockLogger: any;
+
+  beforeEach(() => {
+    mockLogger = {
+      info: jest.fn(),
+      error: jest.fn(),
+    };
+    apiService = new ApiService(mockLogger as any);
+    global.fetch = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('should add an endpoint and throw on duplicate', () => {
+    apiService.addEndpoint('test', 'Test Endpoint', 'https://api.example.com/test');
+    expect(() => apiService.addEndpoint('test', 'Duplicate', 'https://api.example.com/duplicate'))
+      .toThrow("Endpoint with ID 'test' already exists.");
+    expect(mockLogger.info).toHaveBeenCalledWith('Added new endpoint: Test Endpoint (test)');
+  });
+
+  it('should fetch data from an endpoint successfully', async () => {
+    const mockResponse = { data: 'test data' };
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue(mockResponse),
+    });
+
+    apiService.addEndpoint('test', 'Test Endpoint', 'https://api.example.com/test');
+    const result = await apiService.fetch('test');
+
+    expect(result).toEqual(mockResponse);
+    expect(global.fetch).toHaveBeenCalledWith('https://api.example.com/test', undefined);
+    expect(mockLogger.info).toHaveBeenCalledWith('Fetching from endpoint: Test Endpoint');
+    expect(mockLogger.info).toHaveBeenCalledWith('Successfully fetched data from Test Endpoint');
+  });
+
+  it('should throw ApiError for non-existent endpoint', async () => {
+    await expect(apiService.fetch('nonexistent')).rejects.toThrow(ApiError);
+    expect(mockLogger.error).toHaveBeenCalledWith('Endpoint not found: nonexistent');
+  });
+
+  it('should throw ApiError for failed API request', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+    });
+
+    apiService.addEndpoint('test', 'Test Endpoint', 'https://api.example.com/test');
+    await expect(apiService.fetch('test')).rejects.toThrow(ApiError);
+    expect(mockLogger.error).toHaveBeenCalledWith('API request failed: Not Found', { status: 404 });
+  });
+
+  it('should throw NetworkError for network failures', async () => {
+    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network failure'));
+
+    apiService.addEndpoint('test', 'Test Endpoint', 'https://api.example.com/test');
+    await expect(apiService.fetch('test')).rejects.toThrow(NetworkError);
+    expect(mockLogger.error).toHaveBeenCalledWith('Network error while fetching Test Endpoint', { endpointName: 'Test Endpoint' });
+  });
+
+  it('should pass custom options to fetch', async () => {
+    const mockResponse = { data: 'test data' };
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue(mockResponse),
+    });
+
+    apiService.addEndpoint('test', 'Test Endpoint', 'https://api.example.com/test');
+    const customOptions = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+    await apiService.fetch('test', customOptions);
+
+    expect(global.fetch).toHaveBeenCalledWith('https://api.example.com/test', customOptions);
   });
 });
